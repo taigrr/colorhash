@@ -15,10 +15,10 @@ func TestHashString(t *testing.T) {
 		String string
 		Value  int
 		ID     string
-	}{{String: "", Value: 7602086723416769149, ID: "Empty string"},
-		{String: "123", Value: 1606385479620709231, ID: "123"},
-		{String: "it's as easy as", Value: 5377981271559288604, ID: "easy"},
-		{String: "hello colorhash", Value: 4155814819593785823, ID: "hello"}}
+	}{{String: "", Value: 5472609002491880228, ID: "Empty string"},
+		{String: "123", Value: 6449148174219763898, ID: "123"},
+		{String: "it's as easy as", Value: 5908178111834329190, ID: "easy"},
+		{String: "hello colorhash", Value: 893132354324239557, ID: "hello"}}
 	for _, tc := range testStrings {
 		t.Run(tc.ID, func(t *testing.T) {
 			hash := HashString(tc.String)

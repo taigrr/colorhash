@@ -3,6 +3,7 @@ package go_colorhash
 import (
 	"crypto/md5"
 	"encoding/binary"
+	"hash/fnv"
 	"io"
 )
 
@@ -10,7 +11,7 @@ const MaxUint = ^uint(0)
 const MaxInt = int(MaxUint >> 1)
 
 func HashString(s string) int {
-	h := md5.New()
+	h := fnv.New64()
 	io.WriteString(h, s)
 	hashb := h.Sum(nil)
 	hashb = hashb[len(hashb)-8:]
