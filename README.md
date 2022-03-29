@@ -13,5 +13,5 @@
 
 
 1. take input as bytes
-1. md5 hash the input
+1. hash the input
 1. use modulo against the sum to choose the color to return from the subset of colors selected.
