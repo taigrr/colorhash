@@ -1,4 +1,4 @@
-package go_colorhash
+package colorhash
 
 import (
 	"errors"
@@ -49,36 +49,53 @@ var ansi = []int{
 	0xFFFFFF, 0x080808, 0x121212, 0x1C1C1C, 0x262626, 0x303030, 0x3A3A3A,
 	0x444444, 0x4E4E4E, 0x585858, 0x626262, 0x6C6C6C, 0x767676, 0x808080,
 	0x8A8A8A, 0x949494, 0x9E9E9E, 0xA8A8A8, 0xB2B2B2, 0xBCBCBC, 0xC6C6C6,
-	0xD0D0D0, 0xDADADA, 0xE4E4E4, 0xEEEEEE}
+	0xD0D0D0, 0xDADADA, 0xE4E4E4, 0xEEEEEE,
+}
 
 type Color struct {
-	Value int
+	Hue   int
+	Alpha int
+}
+
+func (c Color) RGBA() (r, g, b, a uint32) {
+	return uint32(c.GetRed()), uint32(c.GetGreen()), uint32(c.GetBlue()), uint32(c.Alpha)
+}
+
+func RGBA(r, g, b, a int) (c Color, err error) {
+	if r > a {
+		return c, errors.New("r value is greater than a value")
+	}
+	return Color{Hue: r<<16 + g<<8 + b}, nil
 }
 
 func RGB(r, g, b int) Color {
-	return Color{Value: r<<16 + g<<8 + b}
+	return Color{Hue: r<<16 + g<<8 + b}
 }
+
 func (c Color) GetRed() int {
-	return c.Value >> 16 & 0xFF
+	return c.Hue >> 16 & 0xFF
 }
+
 func (c Color) GetGreen() int {
-	return c.Value >> 8 & 0xFF
+	return c.Hue >> 8 & 0xFF
 }
+
 func (c Color) GetBlue() int {
-	return c.Value & 0xFF
+	return c.Hue & 0xFF
 }
 
 func CreateColor(x int) Color {
-	return Color{Value: x % TotalHexColorspace}
+	return Color{Hue: x % TotalHexColorspace}
 }
 
 func (c Color) ToHex() string {
-	return "#" + fmt.Sprintf("%06X", c.Value)
+	return "#" + fmt.Sprintf("%06X", c.Hue)
 }
+
 func (c Color) ToShortHex() string {
-	value := c.Value >> 16 & 0xF
-	value += c.Value >> 8 & 0xF
-	value += c.Value & 0xF
+	value := c.Hue >> 16 & 0xF
+	value += c.Hue >> 8 & 0xF
+	value += c.Hue & 0xF
 	return "#" + fmt.Sprintf("%06X", value)
 }
 
@@ -96,17 +113,17 @@ func FromHex(h string) (c Color, err error) {
 			return
 		}
 		fmt.Println(i)
-		c.Value += int(i << 16)
+		c.Hue += int(i << 16)
 		i, err = strconv.ParseInt(string(h[1])+string(h[1]), 16, 64)
 		if err != nil {
 			return
 		}
-		c.Value += int(i << 8)
+		c.Hue += int(i << 8)
 		i, err = strconv.ParseInt(string(h[2])+string(h[2]), 16, 64)
 		if err != nil {
 			return
 		}
-		c.Value += int(i)
+		c.Hue += int(i)
 	case 6:
 		var i int64
 		i, err = strconv.ParseInt(string(h[0:2]), 16, 64)
@@ -114,20 +131,104 @@ func FromHex(h string) (c Color, err error) {
 			return
 		}
 		fmt.Println(i)
-		c.Value += int(i << 16)
+		c.Hue += int(i << 16)
 		i, err = strconv.ParseInt(string(h[2:4]), 16, 64)
 		if err != nil {
 			return
 		}
-		c.Value += int(i << 8)
+		c.Hue += int(i << 8)
 		i, err = strconv.ParseInt(string(h[4:6]), 16, 64)
 		if err != nil {
 			return
 		}
-		c.Value += int(i)
+		c.Hue += int(i)
 
 	default:
-		err = errors.New("Invalid hex code length")
+		err = errors.New("invalid hex code length")
 	}
 	return
+}
+
+var (
+	Info  = Teal
+	Warn  = Yellow
+	Fatal = Red
+)
+
+var (
+	Black   = ColorString("\033[1;30m%s\033[0m")
+	Red     = ColorString("\033[1;31m%s\033[0m")
+	Green   = ColorString("\033[1;32m%s\033[0m")
+	Yellow  = ColorString("\033[1;33m%s\033[0m")
+	Purple  = ColorString("\033[1;34m%s\033[0m")
+	Magenta = ColorString("\033[1;35m%s\033[0m")
+	Teal    = ColorString("\033[0;97m%s\033[0m")
+	White   = ColorString("\033[1;37m%s\033[0m")
+	//  Bold
+	BBlack  = ColorString("\033[1;30m%s\033[0m")
+	BRed    = ColorString("\033[1;31m%s\033[0m")
+	BGreen  = ColorString("\033[1;32m%s\033[0m")
+	BYellow = ColorString("\033[1;33m%s\033[0m")
+	BBlue   = ColorString("\033[1;34m%s\033[0m")
+	BPurple = ColorString("\033[1;35m%s\033[0m")
+	BCyan   = ColorString("\033[1;36m%s\033[0m")
+	BWhite  = ColorString("\033[1;37m%s\033[0m")
+
+	//  Underline
+	UBlack  = ColorString("\033[4;30m%s\033[0m")
+	URed    = ColorString("\033[4;31m%s\033[0m")
+	UGreen  = ColorString("\033[4;32m%s\033[0m")
+	UYellow = ColorString("\033[4;33m%s\033[0m")
+	UBlue   = ColorString("\033[4;34m%s\033[0m")
+	UPurple = ColorString("\033[4;35m%s\033[0m")
+	UCyan   = ColorString("\033[4;36m%s\033[0m")
+	UWhite  = ColorString("\033[4;37m%s\033[0m")
+
+	//  Background
+	OnBlack  = ColorString("\033[40m%s\033[0m")
+	OnRed    = ColorString("\033[41m%s\033[0m")
+	OnGreen  = ColorString("\033[42m%s\033[0m")
+	OnYellow = ColorString("\033[43m%s\033[0m")
+	OnBlue   = ColorString("\033[44m%s\033[0m")
+	OnPurple = ColorString("\033[45m%s\033[0m")
+	OnCyan   = ColorString("\033[46m%s\033[0m")
+	OnWhite  = ColorString("\033[47m%s\033[0m")
+
+	//  High Intensty
+	IBlack  = ColorString("\033[0;90m%s\033[0m")
+	IRed    = ColorString("\033[0;91m%s\033[0m")
+	IGreen  = ColorString("\033[0;92m%s\033[0m")
+	IYellow = ColorString("\033[0;93m%s\033[0m")
+	IBlue   = ColorString("\033[0;94m%s\033[0m")
+	IPurple = ColorString("\033[0;95m%s\033[0m")
+	ICyan   = ColorString("\033[0;96m%s\033[0m")
+	IWhite  = ColorString("\033[0;97m%s\033[0m")
+
+	//  Bold High Intensty
+	BIBlack  = ColorString("\033[1;90m%s\033[0m")
+	BIRed    = ColorString("\033[1;91m%s\033[0m")
+	BIGreen  = ColorString("\033[1;92m%s\033[0m")
+	BIYellow = ColorString("\033[1;93m%s\033[0m")
+	BIBlue   = ColorString("\033[1;94m%s\033[0m")
+	BIPurple = ColorString("\033[1;95m%s\033[0m")
+	BICyan   = ColorString("\033[1;96m%s\033[0m")
+	BIWhite  = ColorString("\033[1;97m%s\033[0m")
+
+	//  High Intensty backgrounds
+	OnIBlack  = ColorString("\033[0;100m%s\033[0m")
+	OnIRed    = ColorString("\033[0;101m%s\033[0m")
+	OnIGreen  = ColorString("\033[0;102m%s\033[0m")
+	OnIYellow = ColorString("\033[0;103m%s\033[0m")
+	OnIBlue   = ColorString("\033[0;104m%s\033[0m")
+	OnIPurple = ColorString("\033[10;95m%s\033[0m")
+	OnICyan   = ColorString("\033[0;106m%s\033[0m")
+	OnIWhite  = ColorString("\033[0;107m%s\033[0m")
+)
+
+func ColorString(colorString string) func(...interface{}) string {
+	sprint := func(args ...interface{}) string {
+		return fmt.Sprintf(colorString,
+			fmt.Sprint(args...))
+	}
+	return sprint
 }

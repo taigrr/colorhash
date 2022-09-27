@@ -1,3 +1,3 @@
-module github.com/taigrr/go-colorhash
+module github.com/taigrr/colorhash
 
 go 1.18
