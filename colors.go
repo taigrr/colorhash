@@ -4,10 +4,6 @@ import (
 	"fmt"
 )
 
-const (
-	TotalHexColorspace = 16777216
-)
-
 var (
 	Info  = Teal
 	Warn  = Yellow
