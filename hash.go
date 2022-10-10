@@ -3,6 +3,7 @@ package colorhash
 import (
 	"encoding/binary"
 	"hash/fnv"
+	"image/color"
 	"io"
 )
 
@@ -35,4 +36,20 @@ func HashBytes(r io.Reader) int {
 		sint = sint + MaxInt
 	}
 	return sint
+}
+
+func BytesToColor(p ColorSet, r io.Reader) color.Color {
+	i := HashBytes(r) % p.Len()
+	return p.Get(i)
+}
+
+func StringToColor(p ColorSet, s string) color.Color {
+	i := HashString(s) % p.Len()
+	return p.Get(i)
+}
+
+func (sp StringerPalette) GetString(s string) string {
+	h := HashString(s)
+	h = h % len(sp)
+	return sp[h](s)
 }
