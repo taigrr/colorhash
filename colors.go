@@ -2,6 +2,9 @@ package colorhash
 
 import (
 	"fmt"
+	"image/color"
+
+	"github.com/taigrr/simplecolorpalettes/simplecolor"
 )
 
 var (
@@ -80,10 +83,62 @@ var (
 	OnIWhite  = ColorString("\033[0;107m%s\033[0m")
 )
 
-func ColorString(colorString string) func(...interface{}) string {
+type ColorSet interface {
+	ToPalette() color.Palette
+	Get(int) color.Color
+	Len() int
+}
+
+type StringerPalette []ColorStringer
+
+func createStringerPalette(backgroundFillMode, disableSmartMode bool, c ...ColorSet) StringerPalette {
+	palette := StringerPalette{}
+	for _, colorSet := range c {
+		for i := 0; i < colorSet.Len(); i++ {
+			palette = append(palette, trueColorString(colorSet.Get(i), backgroundFillMode, disableSmartMode))
+		}
+	}
+	return palette
+}
+
+// TBD not yet complete
+func trueColorString(color color.Color, backgroundFillMode, disableSmartMode bool) ColorStringer {
+	fgEsc, bgEsc := 48, 38
+	sprint := func(args ...interface{}) string {
+		r, g, b, _ := color.RGBA()
+		if !disableSmartMode {
+			return fmt.Sprintf("\033[;2;%d;%d;%d;m%s\033[0m\u001B[39m",
+				r, g, b,
+				fmt.Sprint(args...))
+		}
+		esc := fgEsc
+		if backgroundFillMode {
+			esc = bgEsc
+		}
+
+		return fmt.Sprintf("\033[%d;2;%d;%d;%d;m%s\033[0m\u001B[%dm",
+			esc,
+			r, g, b,
+			fmt.Sprint(args...),
+			esc+1)
+	}
+	return sprint
+}
+
+type ColorStringer func(...interface{}) string
+
+func ColorString(colorString string) ColorStringer {
 	sprint := func(args ...interface{}) string {
 		return fmt.Sprintf(colorString,
 			fmt.Sprint(args...))
 	}
 	return sprint
+}
+
+func GetBackgroundColor(c color.Color) color.Color {
+	red, green, blue, _ := c.RGBA()
+	if (float32(red)*0.299 + float32(green)*0.587 + float32(blue)*0.114) > 150.0 {
+		return simplecolor.FromRGBA(0, 0, 0, 0)
+	}
+	return simplecolor.FromRGBA(255, 255, 255, 0)
 }

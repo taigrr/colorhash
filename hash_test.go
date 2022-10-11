@@ -5,9 +5,7 @@ import (
 )
 
 func TestHashBytes(t *testing.T) {
-	testBytes := []struct {
-		runAsUser bool
-	}{}
+	testBytes := []struct{}{}
 	_ = testBytes
 }
 
