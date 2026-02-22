@@ -101,9 +101,8 @@ func createStringerPalette(backgroundFillMode, disableSmartMode bool, c ...Color
 	return palette
 }
 
-// TBD not yet complete
 func trueColorString(color color.Color, backgroundFillMode, disableSmartMode bool) ColorStringer {
-	fgEsc, bgEsc := 48, 38
+	fgEsc, bgEsc := 38, 48
 	sprint := func(args ...interface{}) string {
 		r, g, b, _ := color.RGBA()
 		if !disableSmartMode {
