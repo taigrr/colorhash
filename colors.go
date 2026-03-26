@@ -52,7 +52,7 @@ var (
 	OnCyan   = ColorString("\033[46m%s\033[0m")
 	OnWhite  = ColorString("\033[47m%s\033[0m")
 
-	//  High Intensty
+	//  High Intensity
 	IBlack  = ColorString("\033[0;90m%s\033[0m")
 	IRed    = ColorString("\033[0;91m%s\033[0m")
 	IGreen  = ColorString("\033[0;92m%s\033[0m")
@@ -62,7 +62,7 @@ var (
 	ICyan   = ColorString("\033[0;96m%s\033[0m")
 	IWhite  = ColorString("\033[0;97m%s\033[0m")
 
-	//  Bold High Intensty
+	//  Bold High Intensity
 	BIBlack  = ColorString("\033[1;90m%s\033[0m")
 	BIRed    = ColorString("\033[1;91m%s\033[0m")
 	BIGreen  = ColorString("\033[1;92m%s\033[0m")
@@ -72,7 +72,7 @@ var (
 	BICyan   = ColorString("\033[1;96m%s\033[0m")
 	BIWhite  = ColorString("\033[1;97m%s\033[0m")
 
-	//  High Intensty backgrounds
+	//  High Intensity backgrounds
 	OnIBlack  = ColorString("\033[0;100m%s\033[0m")
 	OnIRed    = ColorString("\033[0;101m%s\033[0m")
 	OnIGreen  = ColorString("\033[0;102m%s\033[0m")
