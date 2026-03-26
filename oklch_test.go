@@ -55,6 +55,27 @@ func TestGenerateOKLCHPaletteSingle(t *testing.T) {
 	}
 }
 
+func TestGenerateOKLCHPaletteNegative(t *testing.T) {
+	palette := GenerateOKLCHPalette(-5, 0.7, 0.15)
+	if len(palette) != 0 {
+		t.Errorf("expected empty palette for negative n, got %d colors", len(palette))
+	}
+}
+
+func TestGenerateOKLCHPaletteLarge(t *testing.T) {
+	palette := GenerateOKLCHPalette(360, 0.7, 0.15)
+	if len(palette) != 360 {
+		t.Fatalf("expected 360 colors, got %d", len(palette))
+	}
+	// Hue step should be ~1° for 360 colors
+	c0 := palette[0].ToOKLCH()
+	c1 := palette[1].ToOKLCH()
+	step := c1.H - c0.H
+	if math.Abs(step-1.0) > 1.0 {
+		t.Errorf("expected ~1° hue step, got %f°", step)
+	}
+}
+
 func TestGenerateOKLCHPaletteDistinct(t *testing.T) {
 	palette := GenerateOKLCHPalette(6, 0.7, 0.15)
 	// All colors should be distinct

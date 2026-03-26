@@ -12,8 +12,8 @@ import (
 type testPalette []color.Color
 
 func (p testPalette) ToPalette() color.Palette { return color.Palette(p) }
-func (p testPalette) Get(i int) color.Color     { return p[i] }
-func (p testPalette) Len() int                   { return len(p) }
+func (p testPalette) Get(i int) color.Color    { return p[i] }
+func (p testPalette) Len() int                 { return len(p) }
 
 func newTestPalette() testPalette {
 	return testPalette{
@@ -150,6 +150,106 @@ func TestStringerPalette(t *testing.T) {
 	result := sp.GetString("test")
 	if result == "" {
 		t.Fatal("GetString returned empty string")
+	}
+}
+
+func TestCreateStringerPaletteBackgroundFill(t *testing.T) {
+	palette := newTestPalette()
+	sp := createStringerPalette(true, false, palette)
+	if len(sp) != len(palette) {
+		t.Fatalf("expected %d entries, got %d", len(palette), len(sp))
+	}
+	result := sp.GetString("test-bg")
+	if result == "" {
+		t.Fatal("GetString with background fill returned empty string")
+	}
+	if result == "test-bg" {
+		t.Fatal("GetString with background fill did not wrap with escape codes")
+	}
+}
+
+func TestCreateStringerPaletteDisableSmart(t *testing.T) {
+	palette := newTestPalette()
+	sp := createStringerPalette(false, true, palette)
+	if len(sp) != len(palette) {
+		t.Fatalf("expected %d entries, got %d", len(palette), len(sp))
+	}
+	result := sp.GetString("test-nosmart")
+	if result == "" {
+		t.Fatal("GetString with smart mode disabled returned empty string")
+	}
+}
+
+func TestCreateStringerPaletteMultipleSets(t *testing.T) {
+	p1 := newTestPalette()
+	p2 := testPalette{
+		simplecolor.FromRGBA(100, 100, 100, 255),
+		simplecolor.FromRGBA(200, 200, 200, 255),
+	}
+	sp := createStringerPalette(false, false, p1, p2)
+	if len(sp) != len(p1)+len(p2) {
+		t.Fatalf("expected %d entries, got %d", len(p1)+len(p2), len(sp))
+	}
+}
+
+func TestGetBackgroundColorMidTone(t *testing.T) {
+	// A mid-tone color to exercise the luminance threshold
+	mid := simplecolor.FromRGBA(128, 128, 128, 255)
+	bg := GetBackgroundColor(mid)
+	// Should return a valid color (either black or white)
+	r, g, b, _ := bg.RGBA()
+	isBlack := r == 0 && g == 0 && b == 0
+	isWhite := r == 255 && g == 255 && b == 255
+	if !isBlack && !isWhite {
+		t.Errorf("expected black or white background, got (%d,%d,%d)", r, g, b)
+	}
+}
+
+func TestColorStringVariants(t *testing.T) {
+	variants := []struct {
+		name string
+		fn   ColorStringer
+	}{
+		{"Green", Green},
+		{"Yellow", Yellow},
+		{"Purple", Purple},
+		{"Magenta", Magenta},
+		{"BBlue", BBlue},
+		{"UCyan", UCyan},
+		{"OnRed", OnRed},
+		{"IBlue", IBlue},
+		{"BICyan", BICyan},
+		{"OnIGreen", OnIGreen},
+	}
+	for _, v := range variants {
+		t.Run(v.name, func(t *testing.T) {
+			result := v.fn("test")
+			if result == "" {
+				t.Fatalf("%s returned empty string", v.name)
+			}
+			if result == "test" {
+				t.Fatalf("%s did not apply escape codes", v.name)
+			}
+		})
+	}
+}
+
+func TestHashBytesEmpty(t *testing.T) {
+	h := HashBytes(bytes.NewReader([]byte{}))
+	if h < 0 {
+		t.Errorf("HashBytes with empty input returned negative: %d", h)
+	}
+}
+
+func TestBytesToColorDeterministic(t *testing.T) {
+	palette := newTestPalette()
+	input := []byte("consistent-bytes")
+	c1 := BytesToColor(palette, bytes.NewReader(input))
+	c2 := BytesToColor(palette, bytes.NewReader(input))
+	r1, g1, b1, a1 := c1.RGBA()
+	r2, g2, b2, a2 := c2.RGBA()
+	if r1 != r2 || g1 != g2 || b1 != b2 || a1 != a2 {
+		t.Error("BytesToColor is not deterministic")
 	}
 }
 
