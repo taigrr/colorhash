@@ -1,13 +1,14 @@
 # colorhash
 
-Deterministic color assignment from arbitrary input. Feed it a string or byte stream and get back a consistent color every time.
+Map arbitrary strings and byte streams to deterministic colors from a given palette.
 
 ## Features
 
-- **Deterministic** — same input always produces the same color
-- **Pluggable palettes** — bring your own `ColorSet` or use [simplecolorpalettes](https://github.com/taigrr/simplecolorpalettes)
-- **Multiple output formats** — `color.Color`, ANSI escape codes, true-color terminal strings
-- **String and byte input** — hash strings directly or stream bytes via `io.Reader`
+- **Deterministic hashing** — same input always produces the same color
+- **FNV-64 based** — fast, well-distributed hash function
+- **OKLCH palette generation** — perceptually uniform color palettes
+- **ANSI terminal colors** — built-in escape code wrappers for terminal output
+- **True color support** — 24-bit RGB terminal color output
 
 ## Install
 
@@ -17,32 +18,31 @@ go get github.com/taigrr/colorhash
 
 ## Usage
 
-### Hash a string to a color
+### Map a string to a color
 
 ```go
 import (
     "github.com/taigrr/colorhash"
-    "github.com/taigrr/simplecolorpalettes/palettes/html"
+    "github.com/taigrr/simplecolorpalettes/flatui"
 )
 
-palette := html.GetPalette() // or any ColorSet
-c := colorhash.StringToColor(palette, "username")
-// c is a deterministic color.Color
+// Pick a color from a palette based on a string
+c := colorhash.StringToColor(flatui.Palette, "alice")
 ```
 
-### ANSI terminal colors
+### Generate an OKLCH palette
 
 ```go
-fmt.Println(colorhash.Red("error message"))
+// 8 evenly-spaced hues at lightness 0.7, chroma 0.15
+palette := colorhash.GenerateOKLCHPalette(8, 0.7, 0.15)
+```
+
+### Terminal color output
+
+```go
+fmt.Println(colorhash.Red("error"))
 fmt.Println(colorhash.Green("success"))
-fmt.Println(colorhash.BIYellow("bold high-intensity yellow"))
-```
-
-### Automatic color from a palette
-
-```go
-sp := colorhash.CreateStringerPalette(false, false, palette)
-colored := sp.GetString("username") // wraps "username" in its assigned color
+fmt.Println(colorhash.Info("info message"))
 ```
 
 ## License
