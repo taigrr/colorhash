@@ -2,6 +2,7 @@ package colorhash
 
 import (
 	"bytes"
+	"fmt"
 	"image/color"
 	"testing"
 
@@ -250,6 +251,56 @@ func TestBytesToColorDeterministic(t *testing.T) {
 	r2, g2, b2, a2 := c2.RGBA()
 	if r1 != r2 || g1 != g2 || b1 != b2 || a1 != a2 {
 		t.Error("BytesToColor is not deterministic")
+	}
+}
+
+func TestRegularAndBoldColorsDiffer(t *testing.T) {
+	pairs := []struct {
+		name    string
+		regular ColorStringer
+		bold    ColorStringer
+	}{
+		{"Black", Black, BBlack},
+		{"Red", Red, BRed},
+		{"Green", Green, BGreen},
+		{"Yellow", Yellow, BYellow},
+	}
+	for _, p := range pairs {
+		t.Run(p.name, func(t *testing.T) {
+			reg := p.regular("x")
+			bld := p.bold("x")
+			if reg == bld {
+				t.Errorf("%s regular and bold produce identical output: %q", p.name, reg)
+			}
+		})
+	}
+}
+
+func TestPurpleIsNotBlue(t *testing.T) {
+	purple := Purple("x")
+	blue := BBlue("x")
+	if purple == blue {
+		t.Error("Purple should not produce the same output as BBlue")
+	}
+}
+
+func TestTealIsNotWhite(t *testing.T) {
+	teal := Teal("x")
+	white := IWhite("x")
+	if teal == white {
+		t.Error("Teal should not produce the same output as IWhite")
+	}
+}
+
+func TestOnIPurpleCode(t *testing.T) {
+	result := OnIPurple("x")
+	// Should use code 105 (high intensity background purple), not 95
+	if result == "" {
+		t.Fatal("OnIPurple returned empty")
+	}
+	// Verify it doesn't contain the old broken code
+	if result == fmt.Sprintf("\033[10;95m%s\033[0m", "x") {
+		t.Error("OnIPurple still uses broken ANSI code 10;95")
 	}
 }
 

@@ -1,3 +1,5 @@
+// Package colorhash maps arbitrary strings and byte streams to
+// deterministic colors from a given palette.
 package colorhash
 
 import (

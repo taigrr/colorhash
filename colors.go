@@ -7,6 +7,7 @@ import (
 	"github.com/taigrr/simplecolorpalettes/simplecolor"
 )
 
+// Semantic color aliases for log-level styling.
 var (
 	Info  = Teal
 	Warn  = Yellow
@@ -14,14 +15,14 @@ var (
 )
 
 var (
-	Black   = ColorString("\033[1;30m%s\033[0m")
-	Red     = ColorString("\033[1;31m%s\033[0m")
-	Green   = ColorString("\033[1;32m%s\033[0m")
-	Yellow  = ColorString("\033[1;33m%s\033[0m")
-	Purple  = ColorString("\033[1;34m%s\033[0m")
-	Magenta = ColorString("\033[1;35m%s\033[0m")
-	Teal    = ColorString("\033[0;97m%s\033[0m")
-	White   = ColorString("\033[1;37m%s\033[0m")
+	Black   = ColorString("\033[0;30m%s\033[0m")
+	Red     = ColorString("\033[0;31m%s\033[0m")
+	Green   = ColorString("\033[0;32m%s\033[0m")
+	Yellow  = ColorString("\033[0;33m%s\033[0m")
+	Purple  = ColorString("\033[0;35m%s\033[0m")
+	Magenta = ColorString("\033[0;35m%s\033[0m")
+	Teal    = ColorString("\033[0;36m%s\033[0m")
+	White   = ColorString("\033[0;37m%s\033[0m")
 	//  Bold
 	BBlack  = ColorString("\033[1;30m%s\033[0m")
 	BRed    = ColorString("\033[1;31m%s\033[0m")
@@ -78,17 +79,20 @@ var (
 	OnIGreen  = ColorString("\033[0;102m%s\033[0m")
 	OnIYellow = ColorString("\033[0;103m%s\033[0m")
 	OnIBlue   = ColorString("\033[0;104m%s\033[0m")
-	OnIPurple = ColorString("\033[10;95m%s\033[0m")
+	OnIPurple = ColorString("\033[0;105m%s\033[0m")
 	OnICyan   = ColorString("\033[0;106m%s\033[0m")
 	OnIWhite  = ColorString("\033[0;107m%s\033[0m")
 )
 
+// ColorSet is a palette of colors that can be indexed by position.
 type ColorSet interface {
 	ToPalette() color.Palette
 	Get(int) color.Color
 	Len() int
 }
 
+// StringerPalette is a slice of ColorStringer functions used to map
+// strings to colorized terminal output.
 type StringerPalette []ColorStringer
 
 func createStringerPalette(backgroundFillMode, disableSmartMode bool, c ...ColorSet) StringerPalette {
@@ -124,8 +128,11 @@ func trueColorString(color color.Color, backgroundFillMode, disableSmartMode boo
 	return sprint
 }
 
+// ColorStringer wraps a string in ANSI escape codes for terminal coloring.
 type ColorStringer func(...interface{}) string
 
+// ColorString returns a ColorStringer that wraps text using the given
+// ANSI escape code format string.
 func ColorString(colorString string) ColorStringer {
 	sprint := func(args ...interface{}) string {
 		return fmt.Sprintf(colorString,
@@ -134,6 +141,8 @@ func ColorString(colorString string) ColorStringer {
 	return sprint
 }
 
+// GetBackgroundColor returns black or white depending on the perceived
+// luminance of c, suitable for readable text on a colored background.
 func GetBackgroundColor(c color.Color) color.Color {
 	red, green, blue, _ := c.RGBA()
 	if (float32(red)*0.299 + float32(green)*0.587 + float32(blue)*0.114) > 150.0 {
