@@ -114,6 +114,20 @@ func TestStringToColorDeterministic(t *testing.T) {
 	}
 }
 
+func TestStringToColorEmptyPalette(t *testing.T) {
+	var palette testPalette
+	if c := StringToColor(palette, "test"); c != nil {
+		t.Fatal("expected nil color for empty palette")
+	}
+}
+
+func TestBytesToColorEmptyPalette(t *testing.T) {
+	var palette testPalette
+	if c := BytesToColor(palette, bytes.NewReader([]byte("test"))); c != nil {
+		t.Fatal("expected nil color for empty palette")
+	}
+}
+
 func TestColorString(t *testing.T) {
 	result := Red("error")
 	if result == "" {
@@ -151,6 +165,13 @@ func TestStringerPalette(t *testing.T) {
 	result := sp.GetString("test")
 	if result == "" {
 		t.Fatal("GetString returned empty string")
+	}
+}
+
+func TestStringerPaletteEmpty(t *testing.T) {
+	var sp StringerPalette
+	if got := sp.GetString("plain"); got != "plain" {
+		t.Fatalf("expected unmodified string for empty palette, got %q", got)
 	}
 }
 

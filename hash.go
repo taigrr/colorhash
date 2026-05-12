@@ -46,12 +46,18 @@ func HashBytes(r io.Reader) int {
 
 // BytesToColor hashes the data from r and maps it to a color in p.
 func BytesToColor(p ColorSet, r io.Reader) color.Color {
+	if p.Len() == 0 {
+		return nil
+	}
 	i := HashBytes(r) % p.Len()
 	return p.Get(i)
 }
 
 // StringToColor hashes s and maps it to a color in p.
 func StringToColor(p ColorSet, s string) color.Color {
+	if p.Len() == 0 {
+		return nil
+	}
 	i := HashString(s) % p.Len()
 	return p.Get(i)
 }
@@ -59,6 +65,9 @@ func StringToColor(p ColorSet, s string) color.Color {
 // GetString hashes s and returns it wrapped in the corresponding
 // palette entry's ANSI escape codes.
 func (sp StringerPalette) GetString(s string) string {
+	if len(sp) == 0 {
+		return s
+	}
 	h := HashString(s)
 	h = h % len(sp)
 	return sp[h](s)
