@@ -202,6 +202,14 @@ func TestCreateStringerPaletteDisableSmart(t *testing.T) {
 	}
 }
 
+func TestTrueColorStringNormalizesStandardColors(t *testing.T) {
+	result := trueColorString(color.RGBA{R: 255, G: 128, B: 64, A: 255}, false, true)("test")
+	expected := "\033[38;2;255;128;64;mtest\033[0m\u001B[39m"
+	if result != expected {
+		t.Fatalf("expected %q, got %q", expected, result)
+	}
+}
+
 func TestCreateStringerPaletteMultipleSets(t *testing.T) {
 	p1 := newTestPalette()
 	p2 := testPalette{
