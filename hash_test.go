@@ -235,6 +235,14 @@ func TestGetBackgroundColorMidTone(t *testing.T) {
 	}
 }
 
+func TestGetBackgroundColorNormalizesStandardColors(t *testing.T) {
+	bg := GetBackgroundColor(color.RGBA{R: 1, G: 1, B: 1, A: 255})
+	r, g, b, _ := bg.RGBA()
+	if r != 255 || g != 255 || b != 255 {
+		t.Fatalf("expected white background for very dark standard color, got (%d,%d,%d)", r, g, b)
+	}
+}
+
 func TestColorStringVariants(t *testing.T) {
 	variants := []struct {
 		name string

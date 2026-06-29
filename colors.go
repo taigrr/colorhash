@@ -156,7 +156,7 @@ func ColorString(colorString string) ColorStringer {
 // GetBackgroundColor returns black or white depending on the perceived
 // luminance of c, suitable for readable text on a colored background.
 func GetBackgroundColor(c color.Color) color.Color {
-	red, green, blue, _ := c.RGBA()
+	red, green, blue := rgb8(c)
 	if (float32(red)*0.299 + float32(green)*0.587 + float32(blue)*0.114) > 150.0 {
 		return simplecolor.FromRGBA(0, 0, 0, 0)
 	}
