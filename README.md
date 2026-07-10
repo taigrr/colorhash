@@ -37,6 +37,13 @@ c := colorhash.StringToColor(flatui.Palette, "alice")
 palette := colorhash.GenerateOKLCHPalette(8, 0.7, 0.15)
 ```
 
+### Assign terminal colors from a palette
+
+```go
+sp := colorhash.CreateStringerPalette(palette)
+fmt.Println(sp.GetString("alice"))
+```
+
 ### Terminal color output
 
 ```go

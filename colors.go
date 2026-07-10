@@ -95,6 +95,24 @@ type ColorSet interface {
 // strings to colorized terminal output.
 type StringerPalette []ColorStringer
 
+// StringerPaletteOptions configures how stringer palettes emit ANSI colors.
+type StringerPaletteOptions struct {
+	BackgroundFillMode bool
+	DisableSmartMode   bool
+}
+
+// CreateStringerPalette returns a palette of ColorStringer functions using
+// foreground true-color ANSI escape codes.
+func CreateStringerPalette(c ...ColorSet) StringerPalette {
+	return CreateStringerPaletteWithOptions(StringerPaletteOptions{}, c...)
+}
+
+// CreateStringerPaletteWithOptions returns a palette of ColorStringer
+// functions configured with opts.
+func CreateStringerPaletteWithOptions(opts StringerPaletteOptions, c ...ColorSet) StringerPalette {
+	return createStringerPalette(opts.BackgroundFillMode, opts.DisableSmartMode, c...)
+}
+
 func createStringerPalette(backgroundFillMode, disableSmartMode bool, c ...ColorSet) StringerPalette {
 	palette := StringerPalette{}
 	for _, colorSet := range c {
