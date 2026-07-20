@@ -30,6 +30,16 @@ import (
 c := colorhash.StringToColor(flatui.Palette, "alice")
 ```
 
+### Hash a byte stream
+
+```go
+hash, err := colorhash.HashReader(reader)
+if err != nil {
+    return err
+}
+fmt.Println(hash)
+```
+
 ### Generate an OKLCH palette
 
 ```go
