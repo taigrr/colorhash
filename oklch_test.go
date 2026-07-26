@@ -87,3 +87,56 @@ func TestGenerateOKLCHPaletteDistinct(t *testing.T) {
 		seen[int(c)] = true
 	}
 }
+
+func TestGenerateOKLCHPaletteWithHueOffset(t *testing.T) {
+	palette := GenerateOKLCHPaletteWithHueOffset(4, 0.7, 0.15, 30)
+	expectedHues := []float64{30, 120, 210, 300}
+
+	if len(palette) != len(expectedHues) {
+		t.Fatalf("expected %d colors, got %d", len(expectedHues), len(palette))
+	}
+	for i, c := range palette {
+		oklch := c.ToOKLCH()
+		if hueDiff(oklch.H, expectedHues[i]) > 10.0 {
+			t.Errorf("color %d: H = %f, expected ~%f", i, oklch.H, expectedHues[i])
+		}
+	}
+}
+
+func TestGenerateOKLCHPaletteWithHueOffsetWraps(t *testing.T) {
+	palette := GenerateOKLCHPaletteWithHueOffset(3, 0.7, 0.15, 390)
+	expectedHues := []float64{30, 150, 270}
+
+	if len(palette) != len(expectedHues) {
+		t.Fatalf("expected %d colors, got %d", len(expectedHues), len(palette))
+	}
+	for i, c := range palette {
+		oklch := c.ToOKLCH()
+		if hueDiff(oklch.H, expectedHues[i]) > 10.0 {
+			t.Errorf("color %d: H = %f, expected ~%f", i, oklch.H, expectedHues[i])
+		}
+	}
+}
+
+func TestGenerateOKLCHPaletteWithNegativeHueOffsetWraps(t *testing.T) {
+	palette := GenerateOKLCHPaletteWithHueOffset(2, 0.7, 0.15, -90)
+	expectedHues := []float64{270, 90}
+
+	if len(palette) != len(expectedHues) {
+		t.Fatalf("expected %d colors, got %d", len(expectedHues), len(palette))
+	}
+	for i, c := range palette {
+		oklch := c.ToOKLCH()
+		if hueDiff(oklch.H, expectedHues[i]) > 10.0 {
+			t.Errorf("color %d: H = %f, expected ~%f", i, oklch.H, expectedHues[i])
+		}
+	}
+}
+
+func hueDiff(a, b float64) float64 {
+	diff := math.Abs(a - b)
+	if diff > 180 {
+		diff = 360 - diff
+	}
+	return diff
+}

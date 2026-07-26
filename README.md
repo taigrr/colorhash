@@ -35,6 +35,9 @@ c := colorhash.StringToColor(flatui.Palette, "alice")
 ```go
 // 8 evenly-spaced hues at lightness 0.7, chroma 0.15
 palette := colorhash.GenerateOKLCHPalette(8, 0.7, 0.15)
+
+// Rotate the starting hue by 30 degrees
+rotated := colorhash.GenerateOKLCHPaletteWithHueOffset(8, 0.7, 0.15, 30)
 ```
 
 ### Terminal color output
