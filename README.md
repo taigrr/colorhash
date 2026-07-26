@@ -40,6 +40,13 @@ palette := colorhash.GenerateOKLCHPalette(8, 0.7, 0.15)
 rotated := colorhash.GenerateOKLCHPaletteWithHueOffset(8, 0.7, 0.15, 30)
 ```
 
+### Assign terminal colors from a palette
+
+```go
+sp := colorhash.CreateStringerPalette(palette)
+fmt.Println(sp.GetString("alice"))
+```
+
 ### Terminal color output
 
 ```go

@@ -158,9 +158,9 @@ func TestGetBackgroundColor(t *testing.T) {
 
 func TestStringerPalette(t *testing.T) {
 	palette := newTestPalette()
-	sp := createStringerPalette(false, false, palette)
+	sp := CreateStringerPalette(palette)
 	if len(sp) == 0 {
-		t.Fatal("createStringerPalette returned empty palette")
+		t.Fatal("CreateStringerPalette returned empty palette")
 	}
 	result := sp.GetString("test")
 	if result == "" {
@@ -177,7 +177,7 @@ func TestStringerPaletteEmpty(t *testing.T) {
 
 func TestCreateStringerPaletteBackgroundFill(t *testing.T) {
 	palette := newTestPalette()
-	sp := createStringerPalette(true, false, palette)
+	sp := CreateStringerPaletteWithOptions(StringerPaletteOptions{BackgroundFillMode: true}, palette)
 	if len(sp) != len(palette) {
 		t.Fatalf("expected %d entries, got %d", len(palette), len(sp))
 	}
@@ -192,7 +192,7 @@ func TestCreateStringerPaletteBackgroundFill(t *testing.T) {
 
 func TestCreateStringerPaletteDisableSmart(t *testing.T) {
 	palette := newTestPalette()
-	sp := createStringerPalette(false, true, palette)
+	sp := CreateStringerPaletteWithOptions(StringerPaletteOptions{DisableSmartMode: true}, palette)
 	if len(sp) != len(palette) {
 		t.Fatalf("expected %d entries, got %d", len(palette), len(sp))
 	}
@@ -216,9 +216,16 @@ func TestCreateStringerPaletteMultipleSets(t *testing.T) {
 		simplecolor.FromRGBA(100, 100, 100, 255),
 		simplecolor.FromRGBA(200, 200, 200, 255),
 	}
-	sp := createStringerPalette(false, false, p1, p2)
+	sp := CreateStringerPalette(p1, p2)
 	if len(sp) != len(p1)+len(p2) {
 		t.Fatalf("expected %d entries, got %d", len(p1)+len(p2), len(sp))
+	}
+}
+
+func TestCreateStringerPaletteEmptySets(t *testing.T) {
+	sp := CreateStringerPalette()
+	if len(sp) != 0 {
+		t.Fatalf("expected empty stringer palette, got %d entries", len(sp))
 	}
 }
 
