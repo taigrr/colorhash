@@ -202,6 +202,14 @@ func TestCreateStringerPaletteDisableSmart(t *testing.T) {
 	}
 }
 
+func TestTrueColorStringNormalizesStandardColors(t *testing.T) {
+	result := trueColorString(color.RGBA{R: 255, G: 128, B: 64, A: 255}, false, true)("test")
+	expected := "\033[38;2;255;128;64;mtest\033[0m\u001B[39m"
+	if result != expected {
+		t.Fatalf("expected %q, got %q", expected, result)
+	}
+}
+
 func TestCreateStringerPaletteMultipleSets(t *testing.T) {
 	p1 := newTestPalette()
 	p2 := testPalette{
@@ -224,6 +232,14 @@ func TestGetBackgroundColorMidTone(t *testing.T) {
 	isWhite := r == 255 && g == 255 && b == 255
 	if !isBlack && !isWhite {
 		t.Errorf("expected black or white background, got (%d,%d,%d)", r, g, b)
+	}
+}
+
+func TestGetBackgroundColorNormalizesStandardColors(t *testing.T) {
+	bg := GetBackgroundColor(color.RGBA{R: 1, G: 1, B: 1, A: 255})
+	r, g, b, _ := bg.RGBA()
+	if r != 255 || g != 255 || b != 255 {
+		t.Fatalf("expected white background for very dark standard color, got (%d,%d,%d)", r, g, b)
 	}
 }
 

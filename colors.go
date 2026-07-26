@@ -108,7 +108,7 @@ func createStringerPalette(backgroundFillMode, disableSmartMode bool, c ...Color
 func trueColorString(color color.Color, backgroundFillMode, disableSmartMode bool) ColorStringer {
 	fgEsc, bgEsc := 38, 48
 	sprint := func(args ...interface{}) string {
-		r, g, b, _ := color.RGBA()
+		r, g, b := rgb8(color)
 		if !disableSmartMode {
 			return fmt.Sprintf("\033[;2;%d;%d;%d;m%s\033[0m\u001B[39m",
 				r, g, b,
@@ -128,6 +128,18 @@ func trueColorString(color color.Color, backgroundFillMode, disableSmartMode boo
 	return sprint
 }
 
+func rgb8(c color.Color) (r, g, b uint32) {
+	r, g, b, _ = c.RGBA()
+	return colorChannel8(r), colorChannel8(g), colorChannel8(b)
+}
+
+func colorChannel8(channel uint32) uint32 {
+	if channel > 0xff {
+		return channel / 0x101
+	}
+	return channel
+}
+
 // ColorStringer wraps a string in ANSI escape codes for terminal coloring.
 type ColorStringer func(...interface{}) string
 
@@ -144,7 +156,7 @@ func ColorString(colorString string) ColorStringer {
 // GetBackgroundColor returns black or white depending on the perceived
 // luminance of c, suitable for readable text on a colored background.
 func GetBackgroundColor(c color.Color) color.Color {
-	red, green, blue, _ := c.RGBA()
+	red, green, blue := rgb8(c)
 	if (float32(red)*0.299 + float32(green)*0.587 + float32(blue)*0.114) > 150.0 {
 		return simplecolor.FromRGBA(0, 0, 0, 0)
 	}
