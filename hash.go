@@ -1,7 +1,6 @@
 package colorhash
 
 import (
-	"encoding/binary"
 	"hash/fnv"
 	"image/color"
 	"io"
@@ -19,25 +18,26 @@ const (
 func HashString(s string) int {
 	h := fnv.New64()
 	io.WriteString(h, s)
-	hashb := h.Sum(nil)
-	hashb = hashb[len(hashb)-8:]
-	lsb := binary.BigEndian.Uint64(hashb)
-	sint := int(lsb)
-	if sint < 0 {
-		sint = sint + MaxInt
-	}
-	return sint
+	return hashSumToInt(h.Sum64())
 }
 
 // HashBytes returns a deterministic non-negative integer hash of the
 // data read from r using FNV-64.
 func HashBytes(r io.Reader) int {
+	sum, _ := HashReader(r)
+	return sum
+}
+
+// HashReader returns a deterministic non-negative integer hash of the
+// data read from r using FNV-64, along with any read error encountered.
+func HashReader(r io.Reader) (int, error) {
 	h := fnv.New64()
-	io.Copy(h, r)
-	hashb := h.Sum(nil)
-	hashb = hashb[len(hashb)-8:]
-	lsb := binary.BigEndian.Uint64(hashb)
-	sint := int(lsb)
+	_, err := io.Copy(h, r)
+	return hashSumToInt(h.Sum64()), err
+}
+
+func hashSumToInt(sum uint64) int {
+	sint := int(sum)
 	if sint < 0 {
 		sint = sint + MaxInt
 	}

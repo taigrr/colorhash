@@ -2,6 +2,7 @@ package colorhash
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"image/color"
 	"testing"
@@ -75,6 +76,31 @@ func TestHashBytes(t *testing.T) {
 	expected := HashString("hello colorhash")
 	if h != expected {
 		t.Errorf("HashBytes and HashString diverged for same input: %d != %d", h, expected)
+	}
+}
+
+func TestHashReader(t *testing.T) {
+	input := []byte("hello colorhash")
+	h, err := HashReader(bytes.NewReader(input))
+	if err != nil {
+		t.Fatalf("HashReader returned unexpected error: %v", err)
+	}
+	expected := HashString("hello colorhash")
+	if h != expected {
+		t.Errorf("HashReader and HashString diverged for same input: %d != %d", h, expected)
+	}
+}
+
+func TestHashReaderReturnsReadError(t *testing.T) {
+	wantErr := errors.New("read failed")
+	reader := errorReader{data: []byte("partial"), err: wantErr}
+
+	got, err := HashReader(reader)
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("expected read error %v, got %v", wantErr, err)
+	}
+	if got != HashString("partial") {
+		t.Fatalf("expected partial-data hash %d, got %d", HashString("partial"), got)
 	}
 }
 
@@ -361,4 +387,13 @@ func TestDifferentInputsDifferentColors(t *testing.T) {
 	if len(colors) < 2 {
 		t.Errorf("expected multiple distinct colors, got %d", len(colors))
 	}
+}
+
+type errorReader struct {
+	data []byte
+	err  error
+}
+
+func (r errorReader) Read(p []byte) (int, error) {
+	return copy(p, r.data), r.err
 }
