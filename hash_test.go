@@ -104,6 +104,22 @@ func TestHashReaderReturnsReadError(t *testing.T) {
 	}
 }
 
+func TestHashSumToIntAlwaysNonNegative(t *testing.T) {
+	cases := []uint64{
+		0,
+		1,
+		1 << 62,
+		1 << 63,
+		(1 << 63) + 1,
+		^uint64(0),
+	}
+	for _, sum := range cases {
+		if got := hashSumToInt(sum); got < 0 {
+			t.Errorf("hashSumToInt(%#x) = %d, want non-negative", sum, got)
+		}
+	}
+}
+
 func TestHashBytesDeterministic(t *testing.T) {
 	input := []byte("deterministic")
 	h1 := HashBytes(bytes.NewReader(input))
@@ -262,7 +278,7 @@ func TestGetBackgroundColorMidTone(t *testing.T) {
 	// Should return a valid color (either black or white)
 	r, g, b, _ := bg.RGBA()
 	isBlack := r == 0 && g == 0 && b == 0
-	isWhite := r == 255 && g == 255 && b == 255
+	isWhite := r == 0xffff && g == 0xffff && b == 0xffff
 	if !isBlack && !isWhite {
 		t.Errorf("expected black or white background, got (%d,%d,%d)", r, g, b)
 	}
@@ -271,7 +287,7 @@ func TestGetBackgroundColorMidTone(t *testing.T) {
 func TestGetBackgroundColorNormalizesStandardColors(t *testing.T) {
 	bg := GetBackgroundColor(color.RGBA{R: 1, G: 1, B: 1, A: 255})
 	r, g, b, _ := bg.RGBA()
-	if r != 255 || g != 255 || b != 255 {
+	if r != 0xffff || g != 0xffff || b != 0xffff {
 		t.Fatalf("expected white background for very dark standard color, got (%d,%d,%d)", r, g, b)
 	}
 }

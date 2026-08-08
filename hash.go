@@ -41,6 +41,11 @@ func hashSumToInt(sum uint64) int {
 	if sint < 0 {
 		sint = sint + MaxInt
 	}
+	// int(sum) == math.MinInt64 is the sole value the correction above
+	// leaves negative; clamp it so the hash is always non-negative.
+	if sint < 0 {
+		sint = 0
+	}
 	return sint
 }
 

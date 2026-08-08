@@ -70,7 +70,7 @@ func TestGenerateOKLCHPaletteLarge(t *testing.T) {
 	// Hue step should be ~1° for 360 colors
 	c0 := palette[0].ToOKLCH()
 	c1 := palette[1].ToOKLCH()
-	step := c1.H - c0.H
+	step := hueDiff(c1.H, c0.H)
 	if math.Abs(step-1.0) > 1.0 {
 		t.Errorf("expected ~1° hue step, got %f°", step)
 	}
