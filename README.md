@@ -23,21 +23,26 @@ go get github.com/taigrr/colorhash
 ```go
 import (
     "github.com/taigrr/colorhash"
-    "github.com/taigrr/simplecolorpalettes/flatui"
+    "github.com/taigrr/simplecolorpalettes/palettes/html"
 )
 
 // Pick a color from a palette based on a string
-c := colorhash.StringToColor(flatui.Palette, "alice")
+// (html.GetPalette returns a simplecolor.SimplePalette,
+// which WrapSimplePalette adapts to colorhash.ColorSet)
+c := colorhash.StringToColor(colorhash.WrapSimplePalette(html.GetPalette()), "alice")
 ```
 
 ### Hash a byte stream
 
 ```go
-hash, err := colorhash.HashReader(reader)
-if err != nil {
-    return err
+func hashFile(reader io.Reader) error {
+	hash, err := colorhash.HashReader(reader)
+	if err != nil {
+		return err
+	}
+	fmt.Println(hash)
+	return nil
 }
-fmt.Println(hash)
 ```
 
 ### Generate an OKLCH palette
@@ -53,7 +58,7 @@ rotated := colorhash.GenerateOKLCHPaletteWithHueOffset(8, 0.7, 0.15, 30)
 ### Assign terminal colors from a palette
 
 ```go
-sp := colorhash.CreateStringerPalette(palette)
+sp := colorhash.CreateStringerPalette(colorhash.WrapSimplePalette(palette))
 fmt.Println(sp.GetString("alice"))
 ```
 

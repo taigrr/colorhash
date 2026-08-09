@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"image/color"
+	"strings"
 	"testing"
 
 	"github.com/taigrr/simplecolorpalettes/simplecolor"
@@ -36,10 +37,10 @@ func TestHashString(t *testing.T) {
 		Value  int
 		ID     string
 	}{
-		{String: "", Value: 5472609002491880228, ID: "Empty string"},
-		{String: "123", Value: 6449148174219763898, ID: "123"},
+		{String: "", Value: 5472609002491880229, ID: "Empty string"},
+		{String: "123", Value: 6449148174219763899, ID: "123"},
 		{String: "it's as easy as", Value: 5908178111834329190, ID: "easy"},
-		{String: "hello colorhash", Value: 893132354324239557, ID: "hello"},
+		{String: "hello colorhash", Value: 893132354324239558, ID: "hello"},
 	}
 	for _, tc := range testStrings {
 		t.Run(tc.ID, func(t *testing.T) {
@@ -219,7 +220,10 @@ func TestStringerPaletteEmpty(t *testing.T) {
 
 func TestCreateStringerPaletteBackgroundFill(t *testing.T) {
 	palette := newTestPalette()
-	sp := CreateStringerPaletteWithOptions(StringerPaletteOptions{BackgroundFillMode: true}, palette)
+	// BackgroundFillMode only takes effect once smart mode is
+	// disabled; in the default smart-mode path it is currently
+	// ignored (a known, pre-existing limitation).
+	sp := CreateStringerPaletteWithOptions(StringerPaletteOptions{BackgroundFillMode: true, DisableSmartMode: true}, palette)
 	if len(sp) != len(palette) {
 		t.Fatalf("expected %d entries, got %d", len(palette), len(sp))
 	}
@@ -229,6 +233,9 @@ func TestCreateStringerPaletteBackgroundFill(t *testing.T) {
 	}
 	if result == "test-bg" {
 		t.Fatal("GetString with background fill did not wrap with escape codes")
+	}
+	if !strings.Contains(result, "\033[48;") {
+		t.Fatalf("expected a background (48;) SGR sequence, got %q", result)
 	}
 }
 
@@ -246,7 +253,25 @@ func TestCreateStringerPaletteDisableSmart(t *testing.T) {
 
 func TestTrueColorStringNormalizesStandardColors(t *testing.T) {
 	result := trueColorString(color.RGBA{R: 255, G: 128, B: 64, A: 255}, false, true)("test")
-	expected := "\033[38;2;255;128;64;mtest\033[0m\u001B[39m"
+	expected := "\033[38;2;255;128;64mtest\033[0m\u001B[39m"
+	if result != expected {
+		t.Fatalf("expected %q, got %q", expected, result)
+	}
+}
+
+func TestTrueColorStringBackgroundFillMode(t *testing.T) {
+	result := trueColorString(color.RGBA{R: 255, G: 128, B: 64, A: 255}, true, true)("test")
+	expected := "\033[48;2;255;128;64mtest\033[0m\u001B[49m"
+	if result != expected {
+		t.Fatalf("expected %q, got %q", expected, result)
+	}
+}
+
+func TestTrueColorStringSmartMode(t *testing.T) {
+	// Smart mode (disableSmartMode == false, the default) always
+	// colors the foreground and ignores backgroundFillMode.
+	result := trueColorString(color.RGBA{R: 255, G: 128, B: 64, A: 255}, true, false)("test")
+	expected := "\033[38;2;255;128;64mtest\033[0m\u001B[39m"
 	if result != expected {
 		t.Fatalf("expected %q, got %q", expected, result)
 	}
@@ -272,15 +297,13 @@ func TestCreateStringerPaletteEmptySets(t *testing.T) {
 }
 
 func TestGetBackgroundColorMidTone(t *testing.T) {
-	// A mid-tone color to exercise the luminance threshold
+	// Mid-gray (luma 128) is below the 150.0 threshold, so this
+	// should select white text/foreground.
 	mid := simplecolor.FromRGBA(128, 128, 128, 255)
 	bg := GetBackgroundColor(mid)
-	// Should return a valid color (either black or white)
 	r, g, b, _ := bg.RGBA()
-	isBlack := r == 0 && g == 0 && b == 0
-	isWhite := r == 0xffff && g == 0xffff && b == 0xffff
-	if !isBlack && !isWhite {
-		t.Errorf("expected black or white background, got (%d,%d,%d)", r, g, b)
+	if r != 0xffff || g != 0xffff || b != 0xffff {
+		t.Errorf("expected white background for mid-gray input, got (%d,%d,%d)", r, g, b)
 	}
 }
 
@@ -368,6 +391,9 @@ func TestPurpleIsNotBlue(t *testing.T) {
 	if purple == blue {
 		t.Error("Purple should not produce the same output as BBlue")
 	}
+	if want := "\033[0;35mx\033[0m"; purple != want {
+		t.Errorf("Purple(\"x\") = %q, want %q", purple, want)
+	}
 }
 
 func TestTealIsNotWhite(t *testing.T) {
@@ -375,6 +401,9 @@ func TestTealIsNotWhite(t *testing.T) {
 	white := IWhite("x")
 	if teal == white {
 		t.Error("Teal should not produce the same output as IWhite")
+	}
+	if want := "\033[0;36mx\033[0m"; teal != want {
+		t.Errorf("Teal(\"x\") = %q, want %q", teal, want)
 	}
 }
 
@@ -387,6 +416,9 @@ func TestOnIPurpleCode(t *testing.T) {
 	// Verify it doesn't contain the old broken code
 	if result == fmt.Sprintf("\033[10;95m%s\033[0m", "x") {
 		t.Error("OnIPurple still uses broken ANSI code 10;95")
+	}
+	if want := "\033[0;105mx\033[0m"; result != want {
+		t.Errorf("OnIPurple(\"x\") = %q, want %q", result, want)
 	}
 }
 

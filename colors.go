@@ -15,10 +15,14 @@ var (
 )
 
 var (
-	Black   = ColorString("\033[0;30m%s\033[0m")
-	Red     = ColorString("\033[0;31m%s\033[0m")
-	Green   = ColorString("\033[0;32m%s\033[0m")
-	Yellow  = ColorString("\033[0;33m%s\033[0m")
+	Black  = ColorString("\033[0;30m%s\033[0m")
+	Red    = ColorString("\033[0;31m%s\033[0m")
+	Green  = ColorString("\033[0;32m%s\033[0m")
+	Yellow = ColorString("\033[0;33m%s\033[0m")
+	// Purple and Magenta intentionally share ANSI code 35: the base
+	// 16-color palette has no distinct "purple", so Purple is an
+	// alias of Magenta, matching BPurple/UPurple/OnPurple/etc. below
+	// (none of which have a "BMagenta"/"UMagenta"/... counterpart).
 	Purple  = ColorString("\033[0;35m%s\033[0m")
 	Magenta = ColorString("\033[0;35m%s\033[0m")
 	Teal    = ColorString("\033[0;36m%s\033[0m")
@@ -91,14 +95,46 @@ type ColorSet interface {
 	Len() int
 }
 
+// simplePaletteColorSet adapts a simplecolor.SimplePalette to ColorSet.
+// SimplePalette.Get returns the concrete simplecolor.SimpleColor type
+// rather than color.Color, so it does not satisfy ColorSet directly;
+// Go requires an exact method-signature match for interface
+// satisfaction.
+type simplePaletteColorSet simplecolor.SimplePalette
+
+func (s simplePaletteColorSet) ToPalette() color.Palette {
+	return simplecolor.SimplePalette(s).ToPalette()
+}
+
+func (s simplePaletteColorSet) Get(i int) color.Color {
+	return simplecolor.SimplePalette(s).Get(i)
+}
+
+func (s simplePaletteColorSet) Len() int {
+	return len(s)
+}
+
+// WrapSimplePalette adapts p, a github.com/taigrr/simplecolorpalettes
+// SimplePalette such as one returned by a palettes/* package or by
+// GenerateOKLCHPalette, to the ColorSet interface expected by
+// StringToColor, BytesToColor, and CreateStringerPalette.
+func WrapSimplePalette(p simplecolor.SimplePalette) ColorSet {
+	return simplePaletteColorSet(p)
+}
+
 // StringerPalette is a slice of ColorStringer functions used to map
 // strings to colorized terminal output.
 type StringerPalette []ColorStringer
 
 // StringerPaletteOptions configures how stringer palettes emit ANSI colors.
 type StringerPaletteOptions struct {
+	// BackgroundFillMode selects background (rather than foreground)
+	// coloring. It only takes effect when DisableSmartMode is true;
+	// smart mode (the default) always colors the foreground.
 	BackgroundFillMode bool
-	DisableSmartMode   bool
+	// DisableSmartMode opts out of the default foreground-only smart
+	// mode, enabling BackgroundFillMode to select background coloring.
+	DisableSmartMode bool
 }
 
 // CreateStringerPalette returns a palette of ColorStringer functions using
@@ -123,25 +159,35 @@ func createStringerPalette(backgroundFillMode, disableSmartMode bool, c ...Color
 	return palette
 }
 
-func trueColorString(color color.Color, backgroundFillMode, disableSmartMode bool) ColorStringer {
-	fgEsc, bgEsc := 38, 48
+// trueColorString returns a ColorStringer that wraps text in a
+// 24-bit true-color ANSI escape sequence for c. Smart mode (the
+// default, disableSmartMode == false) always colors the foreground
+// and ignores backgroundFillMode; disable smart mode to opt into
+// backgroundFillMode's foreground/background selection.
+func trueColorString(c color.Color, backgroundFillMode, disableSmartMode bool) ColorStringer {
+	const (
+		fgEsc, fgDefault = 38, 39
+		bgEsc, bgDefault = 48, 49
+	)
 	sprint := func(args ...interface{}) string {
-		r, g, b := rgb8(color)
+		r, g, b := rgb8(c)
 		if !disableSmartMode {
-			return fmt.Sprintf("\033[;2;%d;%d;%d;m%s\033[0m\u001B[39m",
+			return fmt.Sprintf("\033[%d;2;%d;%d;%dm%s\033[0m\u001B[%dm",
+				fgEsc,
 				r, g, b,
-				fmt.Sprint(args...))
+				fmt.Sprint(args...),
+				fgDefault)
 		}
-		esc := fgEsc
+		esc, defaultEsc := fgEsc, fgDefault
 		if backgroundFillMode {
-			esc = bgEsc
+			esc, defaultEsc = bgEsc, bgDefault
 		}
 
-		return fmt.Sprintf("\033[%d;2;%d;%d;%d;m%s\033[0m\u001B[%dm",
+		return fmt.Sprintf("\033[%d;2;%d;%d;%dm%s\033[0m\u001B[%dm",
 			esc,
 			r, g, b,
 			fmt.Sprint(args...),
-			esc+1)
+			defaultEsc)
 	}
 	return sprint
 }
@@ -151,11 +197,11 @@ func rgb8(c color.Color) (r, g, b uint32) {
 	return colorChannel8(r), colorChannel8(g), colorChannel8(b)
 }
 
+// colorChannel8 downsamples a 16-bit color.Color.RGBA() channel
+// value in [0, 0xffff] to its 8-bit [0, 0xff] equivalent, matching
+// the standard library's downsampling convention.
 func colorChannel8(channel uint32) uint32 {
-	if channel > 0xff {
-		return channel / 0x101
-	}
-	return channel
+	return channel >> 8
 }
 
 // ColorStringer wraps a string in ANSI escape codes for terminal coloring.

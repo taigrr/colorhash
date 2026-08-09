@@ -25,19 +25,21 @@ jobs:
       - run: go build ./...
       - run: go vet ./...
       - name: staticcheck
-        if: matrix.go-version == '1.26'
         run: |
-          go install honnef.co/go/tools/cmd/staticcheck@latest
+          go install honnef.co/go/tools/cmd/staticcheck@v0.7.0
           staticcheck ./...
       - name: govulncheck
-        if: matrix.go-version == '1.26'
         run: |
-          go install golang.org/x/vuln/cmd/govulncheck@latest
+          go install golang.org/x/vuln/cmd/govulncheck@v1.6.0
           govulncheck ./...
       - run: go test -race -coverprofile=coverage.txt ./...
       - name: Upload coverage
-        if: matrix.go-version == '1.26'
+        # Requires a CODECOV_TOKEN repository secret for uploads from
+        # pushes to this branch (codecov-action v4 dropped tokenless
+        # uploads outside of fork PRs); continue-on-error keeps CI
+        # green until one is configured.
         uses: codecov/codecov-action@v4
         with:
           files: coverage.txt
+          token: ${{ secrets.CODECOV_TOKEN }}
         continue-on-error: true
