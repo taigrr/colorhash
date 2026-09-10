@@ -164,6 +164,22 @@ func TestStringToColorEmptyPalette(t *testing.T) {
 	}
 }
 
+func TestWrapSimplePaletteToPalette(t *testing.T) {
+	source := simplecolor.SimplePalette{
+		simplecolor.FromRGBA(255, 0, 0, 255),
+		simplecolor.FromRGBA(0, 255, 0, 255),
+	}
+	wrapped := WrapSimplePalette(source)
+	palette := wrapped.ToPalette()
+
+	if len(palette) != source.Len() {
+		t.Fatalf("expected %d colors, got %d", source.Len(), len(palette))
+	}
+	if palette[0] != source.Get(0) {
+		t.Fatalf("expected first palette color %v, got %v", source.Get(0), palette[0])
+	}
+}
+
 func TestBytesToColorEmptyPalette(t *testing.T) {
 	var palette testPalette
 	if c := BytesToColor(palette, bytes.NewReader([]byte("test"))); c != nil {
