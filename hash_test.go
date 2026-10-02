@@ -80,6 +80,16 @@ func TestHashBytes(t *testing.T) {
 	}
 }
 
+func TestHashBytesIgnoresReadError(t *testing.T) {
+	wantErr := errors.New("read failed")
+	reader := errorReader{data: []byte("partial"), err: wantErr}
+
+	got := HashBytes(reader)
+	if got != HashString("partial") {
+		t.Fatalf("expected partial-data hash %d, got %d", HashString("partial"), got)
+	}
+}
+
 func TestHashReader(t *testing.T) {
 	input := []byte("hello colorhash")
 	h, err := HashReader(bytes.NewReader(input))
@@ -138,11 +148,31 @@ func TestStringToColor(t *testing.T) {
 	}
 }
 
+func TestStringToColorUsesHashModuloPaletteLength(t *testing.T) {
+	palette := newTestPalette()
+	input := "alice"
+	got := StringToColor(palette, input)
+	want := palette[HashString(input)%palette.Len()]
+	if !sameColor(got, want) {
+		t.Fatalf("expected color %v, got %v", want, got)
+	}
+}
+
 func TestBytesToColor(t *testing.T) {
 	palette := newTestPalette()
 	c := BytesToColor(palette, bytes.NewReader([]byte("test")))
 	if c == nil {
 		t.Fatal("BytesToColor returned nil")
+	}
+}
+
+func TestBytesToColorUsesHashModuloPaletteLength(t *testing.T) {
+	palette := newTestPalette()
+	input := []byte("alice")
+	got := BytesToColor(palette, bytes.NewReader(input))
+	want := palette[HashBytes(bytes.NewReader(input))%palette.Len()]
+	if !sameColor(got, want) {
+		t.Fatalf("expected color %v, got %v", want, got)
 	}
 }
 
@@ -161,6 +191,22 @@ func TestStringToColorEmptyPalette(t *testing.T) {
 	var palette testPalette
 	if c := StringToColor(palette, "test"); c != nil {
 		t.Fatal("expected nil color for empty palette")
+	}
+}
+
+func TestWrapSimplePaletteToPalette(t *testing.T) {
+	source := simplecolor.SimplePalette{
+		simplecolor.FromRGBA(255, 0, 0, 255),
+		simplecolor.FromRGBA(0, 255, 0, 255),
+	}
+	wrapped := WrapSimplePalette(source)
+	palette := wrapped.ToPalette()
+
+	if len(palette) != source.Len() {
+		t.Fatalf("expected %d colors, got %d", source.Len(), len(palette))
+	}
+	if palette[0] != source.Get(0) {
+		t.Fatalf("expected first palette color %v, got %v", source.Get(0), palette[0])
 	}
 }
 
@@ -444,4 +490,10 @@ type errorReader struct {
 
 func (r errorReader) Read(p []byte) (int, error) {
 	return copy(p, r.data), r.err
+}
+
+func sameColor(a, b color.Color) bool {
+	ar, ag, ab, aa := a.RGBA()
+	br, bg, bb, ba := b.RGBA()
+	return ar == br && ag == bg && ab == bb && aa == ba
 }
