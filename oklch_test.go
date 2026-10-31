@@ -1,6 +1,7 @@
 package colorhash
 
 import (
+	"fmt"
 	"math"
 	"testing"
 )
@@ -139,4 +140,25 @@ func hueDiff(a, b float64) float64 {
 		diff = 360 - diff
 	}
 	return diff
+}
+
+func TestGenerateOKLCHPaletteLargeHueOffset(t *testing.T) {
+	const count = 8
+	for _, startHue := range []float64{360e16, -360e16, 1e20, -1e20} {
+		t.Run(fmt.Sprint(startHue), func(t *testing.T) {
+			// Equivalent rotations must produce the same palette even when
+			// the original angle is too large to represent small hue steps.
+			wrapped := math.Mod(startHue, 360)
+			if wrapped < 0 {
+				wrapped += 360
+			}
+			want := GenerateOKLCHPaletteWithHueOffset(count, 0.7, 0.15, wrapped)
+			got := GenerateOKLCHPaletteWithHueOffset(count, 0.7, 0.15, startHue)
+			for index := range want {
+				if got[index] != want[index] {
+					t.Errorf("color %d = %v, want %v for equivalent hue %g", index, got[index], want[index], wrapped)
+				}
+			}
+		})
+	}
 }

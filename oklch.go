@@ -21,6 +21,9 @@ func GenerateOKLCHPaletteWithHueOffset(n int, l, c, startHue float64) simplecolo
 	if n <= 0 {
 		return simplecolor.SimplePalette{}
 	}
+	// Reduce the starting angle before adding small hue steps so large
+	// offsets do not swallow those steps through floating-point rounding.
+	startHue = normalizeHue(startHue)
 	palette := make(simplecolor.SimplePalette, n)
 	step := 360.0 / float64(n)
 	for i := 0; i < n; i++ {
