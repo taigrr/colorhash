@@ -12,6 +12,8 @@ Map arbitrary strings and byte streams to deterministic colors from a given pale
 
 ## Install
 
+Requires Go 1.27.4 or newer.
+
 ```bash
 go get github.com/taigrr/colorhash
 ```
